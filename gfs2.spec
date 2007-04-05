@@ -9,6 +9,7 @@ Group:		Applications/System
 Source0:	ftp://sources.redhat.com/pub/cluster/releases/cluster-%{version}.tar.gz
 # Source0-md5:	2ef3f4ba9d3c87b50adfc9b406171085
 URL:		http://sources.redhat.com/cluster/gfs/
+Patch0:	%{name}-install.patch
 BuildRequires:	kernel-libc-headers
 BuildRequires:	libvolume_id-devel
 BuildRequires:	ncurses-devel
@@ -40,10 +41,10 @@ wszystkich innych maszynach w klastrze.
 
 %prep
 %setup -q -n cluster-%{version}
+%patch0 -p1
 cd %{name}
 
 %{__perl} -pi -e 's,-Wall,%{rpmcflags} -I/usr/include/ncurses -Wall,' make/defines.mk.input
-%{__perl} -pi -e 's/-O2 //' gfs_{mkfs,quota,tool}/Makefile
 
 %build
 cd %{name}
