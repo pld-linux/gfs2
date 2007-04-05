@@ -9,6 +9,7 @@ Group:		Applications/System
 Source0:	ftp://sources.redhat.com/pub/cluster/releases/cluster-%{version}.tar.gz
 # Source0-md5:	2ef3f4ba9d3c87b50adfc9b406171085
 URL:		http://sources.redhat.com/cluster/gfs/
+BuildRequires:	kernel-libc-headers
 BuildRequires:	libvolume_id-devel
 BuildRequires:	ncurses-devel
 BuildRequires:	perl-base
