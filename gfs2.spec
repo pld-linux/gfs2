@@ -8,10 +8,10 @@ License:	GPL v2
 Group:		Applications/System
 Source0:	ftp://sources.redhat.com/pub/cluster/releases/cluster-%{version}.tar.gz
 # Source0-md5:	2ef3f4ba9d3c87b50adfc9b406171085
+Patch0:		%{name}-install.patch
 URL:		http://sources.redhat.com/cluster/gfs/
-Patch0:	%{name}-install.patch
-BuildRequires:	kernel-libc-headers
 BuildRequires:	libvolume_id-devel
+BuildRequires:	linux-libc-headers >= 7:2.6.20
 BuildRequires:	ncurses-devel
 BuildRequires:	perl-base
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -44,7 +44,9 @@ wszystkich innych maszynach w klastrze.
 %patch0 -p1
 cd %{name}
 
-%{__perl} -pi -e 's,-Wall,%{rpmcflags} -I/usr/include/ncurses -Wall,' make/defines.mk.input
+sed -i -e 's,-Wall,%{rpmcflags} -I/usr/include/ncurses -Wall,' make/defines.mk.input
+sed -i -e 's/ -ggdb / %{rpmcflags} /' libgfs2/Makefile
+sed -i -e 's/ -O2 -ggdb / %{rpmcflags} /' mkfs/Makefile
 
 %build
 cd %{name}
