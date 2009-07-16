@@ -1,0 +1,251 @@
+--- cluster-2.03.10.a/gfs-kernel/src/gfs/ops_address.c	2009-07-15 12:29:31.003964220 +0200
++++ cluster-2.03.10.b/gfs-kernel/src/gfs/ops_address.c	2009-07-15 12:32:52.853942346 +0200
+@@ -7,6 +7,7 @@
+ #include <linux/completion.h>
+ #include <linux/buffer_head.h>
+ #include <linux/pagemap.h>
++#include <linux/version.h>
+ 
+ #include "gfs.h"
+ #include "bmap.h"
+@@ -19,8 +20,16 @@
+ #include "quota.h"
+ #include "trans.h"
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,28)
+ static int gfs_commit_write(struct file *file, struct page *page,
+ 							unsigned from, unsigned to);
++#else
++static int
++gfs_write_end(struct file *file, struct address_space *mapping,
++		loff_t pos, unsigned len, unsigned copied,
++		struct page *page, void *fsdata);
++#endif
++
+ /**
+  * get_block - Fills in a buffer head with details about a block
+  * @inode: The inode
+@@ -283,6 +292,7 @@
+ 	return error;
+ }
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,28)
+ /**
+  * gfs_prepare_write - Prepare to write a page to a file
+  * @file: The file to write to
+@@ -333,7 +343,75 @@
+ 
+ 	return error;
+ }
++#else
++/**
++ * gfs_write_begin - Begin to write to a file
++ * @file: The file to write to
++ * @mapping: The mapping in which to write
++ * @pos: The file offset at which to start writing
++ * @len: Length of the write
++ * @flags: Various flags
++ * @pagep: Pointer to return the page
++ * @fsdata: Pointer to return fs data (unused by GFS)
++ * 
++ * Returns: errno
++ * 
++ * Make sure file's inode is glocked; we shouldn't write without that!
++ * If GFS dinode is currently stuffed (small enough that all data fits within
++ * the dinode block), and new file size is too large, unstuff it.
++ * Use Linux VFS block_prepare_write() to write blocks, using GFS' get_block()
++ * to find which blocks to write.
++ */
++
++static int
++gfs_write_begin(struct file *file, struct address_space *mapping,
++		loff_t pos, unsigned len, unsigned flags,
++		struct page **pagep, void **fsdata)
++{
++	struct gfs_inode *ip = get_v2ip(mapping->host);
++	struct gfs_sbd *sdp = ip->i_sbd;
++	int error = 0;
++	pgoff_t index = pos >> PAGE_CACHE_SHIFT;
++	unsigned from = pos & (PAGE_CACHE_SIZE - 1);
++	unsigned to = from + len;
++	struct page *page;
++	
++	atomic_inc(&sdp->sd_ops_address);
++	/* We can't set write_end in the structure in the declare         */
++	/* because if we do, loopback (loop.c) will interpret that to mean   */
++	/* it's okay to do buffered writes without locking through sendfile. */
++	/* This is a kludge to get around the problem with loop.c because    */
++	/* the upstream community rejected my changes to loop.c.             */
++        ip->gfs_file_aops.write_end = gfs_write_end;
++
++        if (gfs_assert_warn(sdp, gfs_glock_is_locked_by_me(ip->i_gl)))
++                return -ENOSYS;
++
++        error = -ENOMEM;
++        page = grab_cache_page_write_begin(mapping, index, flags);
++        *pagep = page;
++        if (!page)
++                goto out;
++
++        if (gfs_is_stuffed(ip)) {
++                if (pos + len > sdp->sd_sb.sb_bsize - sizeof(struct gfs_dinode)) {
++                        error = gfs_unstuff_dinode(ip, gfs_unstuffer_page, page);
++                        if (!error)                                                                                                                                                  
++                                error = block_prepare_write(page, from, to, get_block);
++                } else if (!PageUptodate(page))
++                        error = stuffed_readpage(ip, page);
++        } else
++                error = block_prepare_write(page, from, to, get_block);
++
++        if (error)
++                page_cache_release(page);
++
++out:
++        return error;
++}
++#endif
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,28)
+ /**
+  * gfs_commit_write - Commit write to a file
+  * @file: The file to write to
+@@ -397,6 +475,77 @@
+ 
+ 	return error;
+ }
++#else
++/**
++ * gfs_write_end
++ * @file: The file to write to
++ * @mapping: The address space to write to
++ * @pos: The file position
++ * @len: The length of the data
++ * @copied:
++ * @page: The page that has been written
++ * @fsdata: The fsdata (unused in GFS)
++ * 
++ * The main write_end function for GFS. We have a separate one for
++ * stuffed files as they are slightly different, otherwise we just                                                                                                                     
++ * put our locking around the VFS provided functions                                                                                                                                   
++ *
++ * Returns: errno
++ */
++
++static int
++gfs_write_end(struct file *file, struct address_space *mapping,
++              loff_t pos, unsigned len, unsigned copied,
++              struct page *page, void *fsdata)
++{
++        struct inode *inode = page->mapping->host;
++        struct gfs_inode *ip = get_v2ip(inode);
++        struct gfs_sbd *sdp = ip->i_sbd;
++        int ret;
++
++        atomic_inc(&sdp->sd_ops_address);
++        BUG_ON(gfs_glock_is_locked_by_me(ip->i_gl) == 0);
++
++        if (gfs_is_stuffed(ip)) {
++                struct buffer_head *dibh;
++                u64 to = pos + copied;
++                void *kaddr;
++                unsigned char *buf;
++
++                ret = gfs_get_inode_buffer(ip, &dibh);
++                if (ret)
++                        goto fail;
++                buf = dibh->b_data + sizeof(struct gfs_dinode);
++                BUG_ON((pos + len) > (dibh->b_size - sizeof(struct gfs_dinode)));
++
++                kaddr = kmap(page);
++                memcpy(buf + pos, kaddr + pos, copied);
++                memset(kaddr + pos + copied, 0, len - copied);
++                flush_dcache_page(page);
++                kunmap(page);
++
++                brelse(dibh);
++                if (!PageUptodate(page))
++                        SetPageUptodate(page);
++                unlock_page(page);
++                page_cache_release(page);
++
++                if (inode->i_size < to)
++                        i_size_write(inode, to);
++        } else {
++                ret = generic_write_end(file, mapping, pos, len, copied, page, fsdata);
++        }
++
++        ip->gfs_file_aops.write_end = NULL;
++        return ret;
++
++fail:
++        ClearPageUptodate(page);
++        unlock_page(page);
++        page_cache_release(page);
++        return ret;
++}
++#endif
+ 
+ /**
+  * gfs_bmap - Block map function
+@@ -473,7 +622,11 @@
+ 	.writepage = gfs_writepage,
+ 	.readpage = gfs_readpage,
+ 	.sync_page = block_sync_page,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,28)
+ 	.prepare_write = gfs_prepare_write,
++#else
++	.write_begin = gfs_write_begin,
++#endif
+ 	.bmap = gfs_bmap,
+ 	.direct_IO = gfs_direct_IO,
+ };
+--- cluster-2.03.10.a/gfs-kernel/src/gfs/ops_export.c	2008-12-09 09:36:04.000000000 +0100
++++ cluster-2.03.10.b/gfs-kernel/src/gfs/ops_export.c	2009-07-15 12:57:19.207191847 +0200
+@@ -6,6 +6,7 @@
+ #include <linux/completion.h>
+ #include <linux/buffer_head.h>
+ #include <linux/exportfs.h>
++#include <linux/version.h>
+ 
+ #include "gfs.h"
+ #include "dio.h"
+@@ -208,6 +209,7 @@
+ 	if (!inode)
+ 		return ERR_PTR(-ENOMEM);
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,28)
+ 	dentry = d_alloc_anon(inode);
+ 	if (!dentry) {
+ 		iput(inode);
+@@ -215,6 +217,11 @@
+ 	}
+ 
+ 	dentry->d_op = &gfs_dops;
++#else
++	dentry = d_obtain_alias(inode);
++	if (!IS_ERR(dentry))
++		dentry->d_op = &gfs_dops;
++#endif
+ 	return dentry;
+ 
+  fail:
+@@ -326,6 +333,7 @@
+ 		return ERR_PTR(-ESTALE);
+ 	}
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,28)
+ 	dentry = d_alloc_anon(inode);
+ 	if (!dentry) {
+ 		iput(inode);
+@@ -333,6 +341,11 @@
+ 	}
+ 
+ 	dentry->d_op = &gfs_dops;
++#else
++	dentry = d_obtain_alias(inode);
++	if (!IS_ERR(dentry))
++		dentry->d_op = &gfs_dops;
++#endif
+ 	return dentry;
+ 
+  fail_relse:
