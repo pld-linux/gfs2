@@ -2,16 +2,18 @@
 # TODO:
 #	- update patch0
 #	- cleanup files section
-#	- change from gfs2 to cluster 
+#	- change from gfs2 to cluster
 #	- move to cluster-3 (for kernels 2.6.29+)
 #	- split cluster pkg to gfs2, gfs, fence, dlm, rmanager,
 #	  ccs, cman, group
 #	- more kernel stuff (gnbd, ...), but gnbd looks dead,
 #	  use iscsi, fc, aoe, nbd or sth instead
 #	- optflags
+#   - fixup -n cluster package mess, subpackages, duplicate files, external libs and so on
+#   - is this pkg obsolete by gfs.spec with 2.03?
 # INFO:
 #	- gfs2 and dlm kernel modules are in the kernel package
-#	  (2.6.28.9-3 for example); gfs is the old GFS. 
+#	  (2.6.28.9-3 for example); gfs is the old GFS.
 #
 # Conditional build:
 %bcond_without	dist_kernel	# without distribution kernel
@@ -47,10 +49,10 @@ URL:		http://sources.redhat.com/cluster/gfs/
 BuildRequires:	libvolume_id-devel
 BuildRequires:	linux-libc-headers >= 7:2.6.20
 BuildRequires:	ncurses-devel
-BuildRequires:	perl-base
 BuildRequires:	openais-devel
+BuildRequires:	perl-base
 %if %{with dist_kernel}
-BuildRequires:  kernel%{_alt_kernel}-module-build >= 3:2.6.27
+BuildRequires:	kernel%{_alt_kernel}-module-build >= 3:2.6.27
 %endif
 
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -64,10 +66,10 @@ between them (with FC, iSCSI, NBD, etc...). GFS reads and writes to
 the block device like a local filesystem, but also uses a lock module
 to allow the computers coordinate their I/O so filesystem consistency
 is maintained. One of the nifty features of GFS is perfect consistency
--- changes made to the filesystem on one machine show up immediately
-on all other machines in the cluster.
+-- changes made to the filesystem on one machine show up immediately on all
+other machines in the cluster.
 
-%description -l pl.UTF-8 -n gfs2
+%description -n gfs2 -l pl.UTF-8
 GFS (Global File System) to klastrowy system plików. Pozwala klastrowi
 komputerów na jednoczesne korzystanie z urządzenia blokowego
 dzielonego między nimi (poprzez FC, iSCSI, NBD itp.). GFS odczytuje i
@@ -83,7 +85,7 @@ Summary:	Cluster stuff
 Group:		Applications/System
 
 %description -n cluster
-The rest of the cluster stuff. 
+The rest of the cluster stuff.
 
 %package -n kernel%{_alt_kernel}-misc-gfs
 Summary:	gfs kernel module
@@ -136,7 +138,7 @@ sed -i -e "s,\$(OBJDIR),$PWD," gnbd-kernel/src/Makefile
 	--mandir=%{_mandir} \
 	--prefix=%{_prefix} \
 	--sbindir=%{_sbindir} \
-	--ncursesincdir=%{_includedir}/ncurses \
+	--ncursesincdir=/usr/include/ncurses \
 	--without_kernel_modules
 
 %if %{with userspace}
@@ -157,7 +159,7 @@ rm -rf $RPM_BUILD_ROOT
 	DESTDIR=$RPM_BUILD_ROOT
 
 install -d $RPM_BUILD_ROOT/etc/rc.d/init.d
-mv $RPM_BUILD_ROOT/etc/init.d/* $RPM_BUILD_ROOT/etc/rc.d/init.d
+mv $RPM_BUILD_ROOT/''etc/init.d/* $RPM_BUILD_ROOT/etc/rc.d/init.d
 %endif
 
 %if %{with kernel}
@@ -174,316 +176,317 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_sbindir}/*gfs2*
 %attr(754,root,root) /etc/rc.d/init.d/gfs2
 %{_mandir}/man?/*gfs2*
-/usr/share/doc/cluster/gfs2.txt
+%{_docdir}/cluster/gfs2.txt
 
 %files -n cluster
 %defattr(644,root,root,755)
-/etc/rc.d/init.d/cman
-/etc/rc.d/init.d/gfs
-/etc/rc.d/init.d/qdiskd
-/etc/rc.d/init.d/rgmanager
-/etc/rc.d/init.d/scsi_reserve
+%attr(754,root,root) /etc/rc.d/init.d/cman
+%attr(754,root,root) /etc/rc.d/init.d/gfs
+%attr(754,root,root) /etc/rc.d/init.d/qdiskd
+%attr(754,root,root) /etc/rc.d/init.d/rgmanager
+%attr(754,root,root) /etc/rc.d/init.d/scsi_reserve
 /etc/udev/rules.d/51-dlm.rules
 %{_includedir}/ccs.h
 %{_includedir}/libcman.h
 %{_includedir}/libdlm.h
 %{_libdir}/libccs.a
 %{_libdir}/libcman.a
-%{_libdir}/libcman.so
-%{_libdir}/libcman.so.2
-%{_libdir}/libcman.so.2.3
+%attr(755,root,root) %{_libdir}/libcman.so
+%attr(755,root,root) %{_libdir}/libcman.so.2
+%attr(755,root,root) %{_libdir}/libcman.so.2.3
 %{_libdir}/libdlm.a
-%{_libdir}/libdlm.so
-%{_libdir}/libdlm.so.2
-%{_libdir}/libdlm.so.2.3
+%attr(755,root,root) %{_libdir}/libdlm.so
+%attr(755,root,root) %{_libdir}/libdlm.so.2
+%attr(755,root,root) %{_libdir}/libdlm.so.2.3
 %{_libdir}/libdlm_lt.a
-%{_libdir}/libdlm_lt.so
-%{_libdir}/libdlm_lt.so.2
-%{_libdir}/libdlm_lt.so.2.3
-/usr/libexec/lcrso/service_cman.lcrso
-/usr/share/cluster/ASEHAagent.sh
-/usr/share/cluster/SAPDatabase
-/usr/share/cluster/SAPInstance
-/usr/share/cluster/apache.metadata
-/usr/share/cluster/apache.sh
-/usr/share/cluster/clusterfs.sh
-/usr/share/cluster/default_event_script.sl
-/usr/share/cluster/fs.sh
-/usr/share/cluster/ip.sh
-/usr/share/cluster/lvm.metadata
-/usr/share/cluster/lvm.sh
-/usr/share/cluster/lvm_by_lv.sh
-/usr/share/cluster/lvm_by_vg.sh
-/usr/share/cluster/mysql.metadata
-/usr/share/cluster/mysql.sh
-/usr/share/cluster/named.metadata
-/usr/share/cluster/named.sh
-/usr/share/cluster/netfs.sh
-/usr/share/cluster/nfsclient.sh
-/usr/share/cluster/nfsexport.sh
-/usr/share/cluster/ocf-shellfuncs
-/usr/share/cluster/openldap.metadata
-/usr/share/cluster/openldap.sh
-/usr/share/cluster/oracledb.sh
-/usr/share/cluster/postgres-8.metadata
-/usr/share/cluster/postgres-8.sh
-/usr/share/cluster/samba.metadata
-/usr/share/cluster/samba.sh
-/usr/share/cluster/script.sh
-/usr/share/cluster/service.sh
-/usr/share/cluster/smb.sh
-/usr/share/cluster/svclib_nfslock
-/usr/share/cluster/tomcat-5.metadata
-/usr/share/cluster/tomcat-5.sh
-/usr/share/cluster/utils/config-utils.sh
-/usr/share/cluster/utils/httpd-parse-config.pl
-/usr/share/cluster/utils/member_util.sh
-/usr/share/cluster/utils/messages.sh
-/usr/share/cluster/utils/ra-skelet.sh
-/usr/share/cluster/utils/tomcat-parse-config.pl
-/usr/share/cluster/vm.sh
-/usr/share/doc/cluster/COPYING.applications
-/usr/share/doc/cluster/COPYING.libraries
-/usr/share/doc/cluster/COPYRIGHT
-/usr/share/doc/cluster/README.licence
-/usr/share/doc/cluster/journaling.txt
-/usr/share/doc/cluster/min-gfs.txt
-/usr/share/doc/cluster/usage.txt
-/usr/share/fence/fencing.py
-/usr/share/fence/telnet_ssl
-/usr/share/snmp/mibs/powernet369.mib
-/sbin/ccs_test
-/sbin/ccs_tool
-/sbin/ccsd
-/sbin/clubufflush
-/sbin/clufindhostname
-/sbin/clulog
-/sbin/clunfslock
-/sbin/clurgmgrd
-/sbin/clurmtabd
-/sbin/clustat
-/sbin/clusvcadm
-/sbin/cman_tool
-/sbin/dlm_controld
-/sbin/dlm_tool
-/sbin/fence_ack_manual
-/sbin/fence_alom
-/sbin/fence_apc
-/sbin/fence_apc_snmp
-/sbin/fence_baytech
-/sbin/fence_bladecenter
-/sbin/fence_brocade
-/sbin/fence_bullpap
-/sbin/fence_cpint
-/sbin/fence_drac
-/sbin/fence_drac5
-/sbin/fence_egenera
-/sbin/fence_eps
-/sbin/fence_gnbd
-/sbin/fence_ibmblade
-/sbin/fence_ifmib
-/sbin/fence_ilo
-/sbin/fence_ipmilan
-/sbin/fence_ldom
-/sbin/fence_lpar
-/sbin/fence_mcdata
-/sbin/fence_node
-/sbin/fence_rackswitch
-/sbin/fence_rps10
-/sbin/fence_rsa
-/sbin/fence_rsb
-/sbin/fence_sanbox2
-/sbin/fence_scsi
-/sbin/fence_scsi_test
-/sbin/fence_tool
-/sbin/fence_virsh
-/sbin/fence_vixel
-/sbin/fence_vmware
-/sbin/fence_wti
-/sbin/fence_xcat
-/sbin/fence_zvm
-/sbin/fenced
-/sbin/fsck.gfs
-/sbin/gfs_controld
-/sbin/gfs_debug
-/sbin/gfs_edit
-/sbin/gfs_fsck
-/sbin/gfs_grow
-/sbin/gfs_jadd
-/sbin/gfs_mkfs
-/sbin/gfs_quota
-/sbin/gfs_tool
-/sbin/gnbd_clusterd
-/sbin/gnbd_export
-/sbin/gnbd_get_uid
-/sbin/gnbd_import
-/sbin/gnbd_monitor
-/sbin/gnbd_recvd
-/sbin/gnbd_serv
-/sbin/group_tool
-/sbin/groupd
-/sbin/mkfs.gfs
-/sbin/mkqdisk
-/sbin/mount.gfs
-/sbin/qdiskd
-/sbin/rg_test
-/sbin/umount.gfs
-/usr/include/ccs.h
-/usr/include/libcman.h
-/usr/include/libdlm.h
-/usr/lib/libccs.a
-/usr/lib/libcman.a
-/usr/lib/libcman.so
-/usr/lib/libcman.so.2
-/usr/lib/libcman.so.2.3
-/usr/lib/libdlm.a
-/usr/lib/libdlm.so
-/usr/lib/libdlm.so.2
-/usr/lib/libdlm.so.2.3
-/usr/lib/libdlm_lt.a
-/usr/lib/libdlm_lt.so
-/usr/lib/libdlm_lt.so.2
-/usr/lib/libdlm_lt.so.2.3
-/usr/libexec/lcrso/service_cman.lcrso
-/usr/share/cluster/ASEHAagent.sh
-/usr/share/cluster/SAPDatabase
-/usr/share/cluster/SAPInstance
-/usr/share/cluster/apache.metadata
-/usr/share/cluster/apache.sh
-/usr/share/cluster/clusterfs.sh
-/usr/share/cluster/default_event_script.sl
-/usr/share/cluster/fs.sh
-/usr/share/cluster/ip.sh
-/usr/share/cluster/lvm.metadata
-/usr/share/cluster/lvm.sh
-/usr/share/cluster/lvm_by_lv.sh
-/usr/share/cluster/lvm_by_vg.sh
-/usr/share/cluster/mysql.metadata
-/usr/share/cluster/mysql.sh
-/usr/share/cluster/named.metadata
-/usr/share/cluster/named.sh
-/usr/share/cluster/netfs.sh
-/usr/share/cluster/nfsclient.sh
-/usr/share/cluster/nfsexport.sh
-/usr/share/cluster/ocf-shellfuncs
-/usr/share/cluster/openldap.metadata
-/usr/share/cluster/openldap.sh
-/usr/share/cluster/oracledb.sh
-/usr/share/cluster/postgres-8.metadata
-/usr/share/cluster/postgres-8.sh
-/usr/share/cluster/samba.metadata
-/usr/share/cluster/samba.sh
-/usr/share/cluster/script.sh
-/usr/share/cluster/service.sh
-/usr/share/cluster/smb.sh
-/usr/share/cluster/svclib_nfslock
-/usr/share/cluster/tomcat-5.metadata
-/usr/share/cluster/tomcat-5.sh
-/usr/share/cluster/utils/config-utils.sh
-/usr/share/cluster/utils/httpd-parse-config.pl
-/usr/share/cluster/utils/member_util.sh
-/usr/share/cluster/utils/messages.sh
-/usr/share/cluster/utils/ra-skelet.sh
-/usr/share/cluster/utils/tomcat-parse-config.pl
-/usr/share/cluster/vm.sh
-/usr/share/doc/cluster/COPYING.applications
-/usr/share/doc/cluster/COPYING.libraries
-/usr/share/doc/cluster/COPYRIGHT
-/usr/share/doc/cluster/README.licence
-/usr/share/doc/cluster/journaling.txt
-/usr/share/doc/cluster/min-gfs.txt
-/usr/share/doc/cluster/usage.txt
-/usr/share/fence/fencing.py
-/usr/share/fence/telnet_ssl
-/usr/share/man/man3/dlm_cleanup.3
-/usr/share/man/man3/dlm_close_lockspace.3
-/usr/share/man/man3/dlm_create_lockspace.3.gz
-/usr/share/man/man3/dlm_dispatch.3
-/usr/share/man/man3/dlm_get_fd.3
-/usr/share/man/man3/dlm_lock.3.gz
-/usr/share/man/man3/dlm_lock_wait.3
-/usr/share/man/man3/dlm_ls_lock.3
-/usr/share/man/man3/dlm_ls_lock_wait.3
-/usr/share/man/man3/dlm_ls_lockx.3
-/usr/share/man/man3/dlm_ls_pthread_init.3
-/usr/share/man/man3/dlm_ls_unlock.3
-/usr/share/man/man3/dlm_ls_unlock_wait.3
-/usr/share/man/man3/dlm_new_lockspace.3
-/usr/share/man/man3/dlm_open_lockspace.3
-/usr/share/man/man3/dlm_pthread_init.3
-/usr/share/man/man3/dlm_release_lockspace.3
-/usr/share/man/man3/dlm_unlock.3.gz
-/usr/share/man/man3/dlm_unlock_wait.3
-/usr/share/man/man3/libdlm.3.gz
-/usr/share/man/man5/cluster.conf.5.gz
-/usr/share/man/man5/cman.5.gz
-/usr/share/man/man5/qdisk.5.gz
-/usr/share/man/man7/ccs.7.gz
-/usr/share/man/man8/ccs_test.8.gz
-/usr/share/man/man8/ccs_tool.8.gz
-/usr/share/man/man8/ccsd.8.gz
-/usr/share/man/man8/clubufflush.8.gz
-/usr/share/man/man8/clufindhostname.8.gz
-/usr/share/man/man8/clulog.8.gz
-/usr/share/man/man8/clurgmgrd.8.gz
-/usr/share/man/man8/clurmtabd.8.gz
-/usr/share/man/man8/clustat.8.gz
-/usr/share/man/man8/clusvcadm.8.gz
-/usr/share/man/man8/cman_tool.8.gz
-/usr/share/man/man8/dlm_controld.8.gz
-/usr/share/man/man8/dlm_tool.8.gz
-/usr/share/man/man8/fence.8.gz
-/usr/share/man/man8/fence_ack_manual.8.gz
-/usr/share/man/man8/fence_alom.8.gz
-/usr/share/man/man8/fence_apc.8.gz
-/usr/share/man/man8/fence_bladecenter.8.gz
-/usr/share/man/man8/fence_brocade.8.gz
-/usr/share/man/man8/fence_bullpap.8.gz
-/usr/share/man/man8/fence_drac.8.gz
-/usr/share/man/man8/fence_egenera.8.gz
-/usr/share/man/man8/fence_eps.8.gz
-/usr/share/man/man8/fence_gnbd.8.gz
-/usr/share/man/man8/fence_ifmib.8.gz
-/usr/share/man/man8/fence_ilo.8.gz
-/usr/share/man/man8/fence_ipmilan.8.gz
-/usr/share/man/man8/fence_ldom.8.gz
-/usr/share/man/man8/fence_manual.8.gz
-/usr/share/man/man8/fence_mcdata.8.gz
-/usr/share/man/man8/fence_node.8.gz
-/usr/share/man/man8/fence_rib.8.gz
-/usr/share/man/man8/fence_rsa.8.gz
-/usr/share/man/man8/fence_sanbox2.8.gz
-/usr/share/man/man8/fence_tool.8.gz
-/usr/share/man/man8/fence_virsh.8.gz
-/usr/share/man/man8/fence_vixel.8.gz
-/usr/share/man/man8/fence_vmware.8.gz
-/usr/share/man/man8/fence_wti.8.gz
-/usr/share/man/man8/fence_xvm.8.gz
-/usr/share/man/man8/fence_xvmd.8.gz
-/usr/share/man/man8/fenced.8.gz
-/usr/share/man/man8/gfs.8.gz
-/usr/share/man/man8/gfs_controld.8.gz
-/usr/share/man/man8/gfs_edit.8
-/usr/share/man/man8/gfs_fsck.8.gz
-/usr/share/man/man8/gfs_grow.8.gz
-/usr/share/man/man8/gfs_jadd.8.gz
-/usr/share/man/man8/gfs_mkfs.8.gz
-/usr/share/man/man8/gfs_mount.8.gz
-/usr/share/man/man8/gfs_quota.8.gz
-/usr/share/man/man8/gfs_tool.8.gz
-/usr/share/man/man8/gnbd.8.gz
-/usr/share/man/man8/gnbd_export.8.gz
-/usr/share/man/man8/gnbd_import.8.gz
-/usr/share/man/man8/gnbd_serv.8.gz
-/usr/share/man/man8/group_tool.8.gz
-/usr/share/man/man8/groupd.8.gz
-/usr/share/man/man8/mkqdisk.8.gz
-/usr/share/man/man8/qdiskd.8.gz
-/usr/share/snmp/mibs/powernet369.mib
+%attr(755,root,root) %{_libdir}/libdlm_lt.so
+%attr(755,root,root) %{_libdir}/libdlm_lt.so.2
+%attr(755,root,root) %{_libdir}/libdlm_lt.so.2.3
+%{_prefix}/libexec/lcrso/service_cman.lcrso
+%{_datadir}/cluster/ASEHAagent.sh
+%{_datadir}/cluster/SAPDatabase
+%{_datadir}/cluster/SAPInstance
+%{_datadir}/cluster/apache.metadata
+%{_datadir}/cluster/apache.sh
+%{_datadir}/cluster/clusterfs.sh
+%{_datadir}/cluster/default_event_script.sl
+%{_datadir}/cluster/fs.sh
+%{_datadir}/cluster/ip.sh
+%{_datadir}/cluster/lvm.metadata
+%{_datadir}/cluster/lvm.sh
+%{_datadir}/cluster/lvm_by_lv.sh
+%{_datadir}/cluster/lvm_by_vg.sh
+%{_datadir}/cluster/mysql.metadata
+%{_datadir}/cluster/mysql.sh
+%{_datadir}/cluster/named.metadata
+%{_datadir}/cluster/named.sh
+%{_datadir}/cluster/netfs.sh
+%{_datadir}/cluster/nfsclient.sh
+%{_datadir}/cluster/nfsexport.sh
+%{_datadir}/cluster/ocf-shellfuncs
+%{_datadir}/cluster/openldap.metadata
+%{_datadir}/cluster/openldap.sh
+%{_datadir}/cluster/oracledb.sh
+%{_datadir}/cluster/postgres-8.metadata
+%{_datadir}/cluster/postgres-8.sh
+%{_datadir}/cluster/samba.metadata
+%{_datadir}/cluster/samba.sh
+%{_datadir}/cluster/script.sh
+%{_datadir}/cluster/service.sh
+%{_datadir}/cluster/smb.sh
+%{_datadir}/cluster/svclib_nfslock
+%{_datadir}/cluster/tomcat-5.metadata
+%{_datadir}/cluster/tomcat-5.sh
+%{_datadir}/cluster/utils/config-utils.sh
+%{_datadir}/cluster/utils/httpd-parse-config.pl
+%{_datadir}/cluster/utils/member_util.sh
+%{_datadir}/cluster/utils/messages.sh
+%{_datadir}/cluster/utils/ra-skelet.sh
+%{_datadir}/cluster/utils/tomcat-parse-config.pl
+%{_datadir}/cluster/vm.sh
+%{_docdir}/cluster/COPYING.applications
+%{_docdir}/cluster/COPYING.libraries
+%{_docdir}/cluster/COPYRIGHT
+%{_docdir}/cluster/README.licence
+%{_docdir}/cluster/journaling.txt
+%{_docdir}/cluster/min-gfs.txt
+%{_docdir}/cluster/usage.txt
+%{_datadir}/fence/fencing.py
+%{_datadir}/fence/telnet_ssl
+%{_datadir}/snmp/mibs/powernet369.mib
+%attr(755,root,root) %{_sbindir}/ccs_test
+%attr(755,root,root) %{_sbindir}/ccs_tool
+%attr(755,root,root) %{_sbindir}/ccsd
+%attr(755,root,root) %{_sbindir}/clubufflush
+%attr(755,root,root) %{_sbindir}/clufindhostname
+%attr(755,root,root) %{_sbindir}/clulog
+%attr(755,root,root) %{_sbindir}/clunfslock
+%attr(755,root,root) %{_sbindir}/clurgmgrd
+%attr(755,root,root) %{_sbindir}/clurmtabd
+%attr(755,root,root) %{_sbindir}/clustat
+%attr(755,root,root) %{_sbindir}/clusvcadm
+%attr(755,root,root) %{_sbindir}/cman_tool
+%attr(755,root,root) %{_sbindir}/dlm_controld
+%attr(755,root,root) %{_sbindir}/dlm_tool
+%attr(755,root,root) %{_sbindir}/fence_ack_manual
+%attr(755,root,root) %{_sbindir}/fence_alom
+%attr(755,root,root) %{_sbindir}/fence_apc
+%attr(755,root,root) %{_sbindir}/fence_apc_snmp
+%attr(755,root,root) %{_sbindir}/fence_baytech
+%attr(755,root,root) %{_sbindir}/fence_bladecenter
+%attr(755,root,root) %{_sbindir}/fence_brocade
+%attr(755,root,root) %{_sbindir}/fence_bullpap
+%attr(755,root,root) %{_sbindir}/fence_cpint
+%attr(755,root,root) %{_sbindir}/fence_drac
+%attr(755,root,root) %{_sbindir}/fence_drac5
+%attr(755,root,root) %{_sbindir}/fence_egenera
+%attr(755,root,root) %{_sbindir}/fence_eps
+%attr(755,root,root) %{_sbindir}/fence_gnbd
+%attr(755,root,root) %{_sbindir}/fence_ibmblade
+%attr(755,root,root) %{_sbindir}/fence_ifmib
+%attr(755,root,root) %{_sbindir}/fence_ilo
+%attr(755,root,root) %{_sbindir}/fence_ipmilan
+%attr(755,root,root) %{_sbindir}/fence_ldom
+%attr(755,root,root) %{_sbindir}/fence_lpar
+%attr(755,root,root) %{_sbindir}/fence_mcdata
+%attr(755,root,root) %{_sbindir}/fence_node
+%attr(755,root,root) %{_sbindir}/fence_rackswitch
+%attr(755,root,root) %{_sbindir}/fence_rps10
+%attr(755,root,root) %{_sbindir}/fence_rsa
+%attr(755,root,root) %{_sbindir}/fence_rsb
+%attr(755,root,root) %{_sbindir}/fence_sanbox2
+%attr(755,root,root) %{_sbindir}/fence_scsi
+%attr(755,root,root) %{_sbindir}/fence_scsi_test
+%attr(755,root,root) %{_sbindir}/fence_tool
+%attr(755,root,root) %{_sbindir}/fence_virsh
+%attr(755,root,root) %{_sbindir}/fence_vixel
+%attr(755,root,root) %{_sbindir}/fence_vmware
+%attr(755,root,root) %{_sbindir}/fence_wti
+%attr(755,root,root) %{_sbindir}/fence_xcat
+%attr(755,root,root) %{_sbindir}/fence_zvm
+%attr(755,root,root) %{_sbindir}/fenced
+%attr(755,root,root) %{_sbindir}/fsck.gfs
+%attr(755,root,root) %{_sbindir}/gfs_controld
+%attr(755,root,root) %{_sbindir}/gfs_debug
+%attr(755,root,root) %{_sbindir}/gfs_edit
+%attr(755,root,root) %{_sbindir}/gfs_fsck
+%attr(755,root,root) %{_sbindir}/gfs_grow
+%attr(755,root,root) %{_sbindir}/gfs_jadd
+%attr(755,root,root) %{_sbindir}/gfs_mkfs
+%attr(755,root,root) %{_sbindir}/gfs_quota
+%attr(755,root,root) %{_sbindir}/gfs_tool
+%attr(755,root,root) %{_sbindir}/gnbd_clusterd
+%attr(755,root,root) %{_sbindir}/gnbd_export
+%attr(755,root,root) %{_sbindir}/gnbd_get_uid
+%attr(755,root,root) %{_sbindir}/gnbd_import
+%attr(755,root,root) %{_sbindir}/gnbd_monitor
+%attr(755,root,root) %{_sbindir}/gnbd_recvd
+%attr(755,root,root) %{_sbindir}/gnbd_serv
+%attr(755,root,root) %{_sbindir}/group_tool
+%attr(755,root,root) %{_sbindir}/groupd
+%attr(755,root,root) %{_sbindir}/mkfs.gfs
+%attr(755,root,root) %{_sbindir}/mkqdisk
+%attr(755,root,root) %{_sbindir}/mount.gfs
+%attr(755,root,root) %{_sbindir}/qdiskd
+%attr(755,root,root) %{_sbindir}/rg_test
+%attr(755,root,root) %{_sbindir}/umount.gfs
+%{_includedir}/ccs.h
+%{_includedir}/libcman.h
+%{_includedir}/libdlm.h
+%{_libdir}/libccs.a
+%{_libdir}/libcman.a
+%attr(755,root,root) %{_libdir}/libcman.so
+%attr(755,root,root) %{_libdir}/libcman.so.2
+%attr(755,root,root) %{_libdir}/libcman.so.2.3
+%{_libdir}/libdlm.a
+%attr(755,root,root) %{_libdir}/libdlm.so
+%attr(755,root,root) %{_libdir}/libdlm.so.2
+%attr(755,root,root) %{_libdir}/libdlm.so.2.3
+%{_libdir}/libdlm_lt.a
+%attr(755,root,root) %{_libdir}/libdlm_lt.so
+%attr(755,root,root) %{_libdir}/libdlm_lt.so.2
+%attr(755,root,root) %{_libdir}/libdlm_lt.so.2.3
+%{_prefix}/libexec/lcrso/service_cman.lcrso
+%{_datadir}/cluster/ASEHAagent.sh
+%{_datadir}/cluster/SAPDatabase
+%{_datadir}/cluster/SAPInstance
+%{_datadir}/cluster/apache.metadata
+%{_datadir}/cluster/apache.sh
+%{_datadir}/cluster/clusterfs.sh
+%{_datadir}/cluster/default_event_script.sl
+%{_datadir}/cluster/fs.sh
+%{_datadir}/cluster/ip.sh
+%{_datadir}/cluster/lvm.metadata
+%{_datadir}/cluster/lvm.sh
+%{_datadir}/cluster/lvm_by_lv.sh
+%{_datadir}/cluster/lvm_by_vg.sh
+%{_datadir}/cluster/mysql.metadata
+%{_datadir}/cluster/mysql.sh
+%{_datadir}/cluster/named.metadata
+%{_datadir}/cluster/named.sh
+%{_datadir}/cluster/netfs.sh
+%{_datadir}/cluster/nfsclient.sh
+%{_datadir}/cluster/nfsexport.sh
+%{_datadir}/cluster/ocf-shellfuncs
+%{_datadir}/cluster/openldap.metadata
+%{_datadir}/cluster/openldap.sh
+%{_datadir}/cluster/oracledb.sh
+%{_datadir}/cluster/postgres-8.metadata
+%{_datadir}/cluster/postgres-8.sh
+%{_datadir}/cluster/samba.metadata
+%{_datadir}/cluster/samba.sh
+%{_datadir}/cluster/script.sh
+%{_datadir}/cluster/service.sh
+%{_datadir}/cluster/smb.sh
+%{_datadir}/cluster/svclib_nfslock
+%{_datadir}/cluster/tomcat-5.metadata
+%{_datadir}/cluster/tomcat-5.sh
+%{_datadir}/cluster/utils/config-utils.sh
+%{_datadir}/cluster/utils/httpd-parse-config.pl
+%{_datadir}/cluster/utils/member_util.sh
+%{_datadir}/cluster/utils/messages.sh
+%{_datadir}/cluster/utils/ra-skelet.sh
+%{_datadir}/cluster/utils/tomcat-parse-config.pl
+%{_datadir}/cluster/vm.sh
+%{_docdir}/cluster/COPYING.applications
+%{_docdir}/cluster/COPYING.libraries
+%{_docdir}/cluster/COPYRIGHT
+%{_docdir}/cluster/README.licence
+%{_docdir}/cluster/journaling.txt
+%{_docdir}/cluster/min-gfs.txt
+%{_docdir}/cluster/usage.txt
+%{_datadir}/fence/fencing.py
+%{_datadir}/fence/telnet_ssl
+%{_mandir}/man3/dlm_cleanup.3
+%{_mandir}/man3/dlm_close_lockspace.3
+%{_mandir}/man3/dlm_create_lockspace.3*
+%{_mandir}/man3/dlm_dispatch.3
+%{_mandir}/man3/dlm_get_fd.3
+%{_mandir}/man3/dlm_lock.3*
+%{_mandir}/man3/dlm_lock_wait.3
+%{_mandir}/man3/dlm_ls_lock.3
+%{_mandir}/man3/dlm_ls_lock_wait.3
+%{_mandir}/man3/dlm_ls_lockx.3
+%{_mandir}/man3/dlm_ls_pthread_init.3
+%{_mandir}/man3/dlm_ls_unlock.3
+%{_mandir}/man3/dlm_ls_unlock_wait.3
+%{_mandir}/man3/dlm_new_lockspace.3
+%{_mandir}/man3/dlm_open_lockspace.3
+%{_mandir}/man3/dlm_pthread_init.3
+%{_mandir}/man3/dlm_release_lockspace.3
+%{_mandir}/man3/dlm_unlock.3*
+%{_mandir}/man3/dlm_unlock_wait.3
+%{_mandir}/man3/libdlm.3*
+%{_mandir}/man5/cluster.conf.5*
+%{_mandir}/man5/cman.5*
+%{_mandir}/man5/qdisk.5*
+%{_mandir}/man7/ccs.7*
+%{_mandir}/man8/ccs_test.8*
+%{_mandir}/man8/ccs_tool.8*
+%{_mandir}/man8/ccsd.8*
+%{_mandir}/man8/clubufflush.8*
+%{_mandir}/man8/clufindhostname.8*
+%{_mandir}/man8/clulog.8*
+%{_mandir}/man8/clurgmgrd.8*
+%{_mandir}/man8/clurmtabd.8*
+%{_mandir}/man8/clustat.8*
+%{_mandir}/man8/clusvcadm.8*
+%{_mandir}/man8/cman_tool.8*
+%{_mandir}/man8/dlm_controld.8*
+%{_mandir}/man8/dlm_tool.8*
+%{_mandir}/man8/fence.8*
+%{_mandir}/man8/fence_ack_manual.8*
+%{_mandir}/man8/fence_alom.8*
+%{_mandir}/man8/fence_apc.8*
+%{_mandir}/man8/fence_bladecenter.8*
+%{_mandir}/man8/fence_brocade.8*
+%{_mandir}/man8/fence_bullpap.8*
+%{_mandir}/man8/fence_drac.8*
+%{_mandir}/man8/fence_egenera.8*
+%{_mandir}/man8/fence_eps.8*
+%{_mandir}/man8/fence_gnbd.8*
+%{_mandir}/man8/fence_ifmib.8*
+%{_mandir}/man8/fence_ilo.8*
+%{_mandir}/man8/fence_ipmilan.8*
+%{_mandir}/man8/fence_ldom.8*
+%{_mandir}/man8/fence_manual.8*
+%{_mandir}/man8/fence_mcdata.8*
+%{_mandir}/man8/fence_node.8*
+%{_mandir}/man8/fence_rib.8*
+%{_mandir}/man8/fence_rsa.8*
+%{_mandir}/man8/fence_sanbox2.8*
+%{_mandir}/man8/fence_tool.8*
+%{_mandir}/man8/fence_virsh.8*
+%{_mandir}/man8/fence_vixel.8*
+%{_mandir}/man8/fence_vmware.8*
+%{_mandir}/man8/fence_wti.8*
+%{_mandir}/man8/fence_xvm.8*
+%{_mandir}/man8/fence_xvmd.8*
+%{_mandir}/man8/fenced.8*
+%{_mandir}/man8/gfs.8*
+%{_mandir}/man8/gfs_controld.8*
+%{_mandir}/man8/gfs_edit.8
+%{_mandir}/man8/gfs_fsck.8*
+%{_mandir}/man8/gfs_grow.8*
+%{_mandir}/man8/gfs_jadd.8*
+%{_mandir}/man8/gfs_mkfs.8*
+%{_mandir}/man8/gfs_mount.8*
+%{_mandir}/man8/gfs_quota.8*
+%{_mandir}/man8/gfs_tool.8*
+%{_mandir}/man8/gnbd.8*
+%{_mandir}/man8/gnbd_export.8*
+%{_mandir}/man8/gnbd_import.8*
+%{_mandir}/man8/gnbd_serv.8*
+%{_mandir}/man8/group_tool.8*
+%{_mandir}/man8/groupd.8*
+%{_mandir}/man8/mkqdisk.8*
+%{_mandir}/man8/qdiskd.8*
+%{_datadir}/snmp/mibs/powernet369.mib
 %endif
 
 %if %{with kernel}
 %files -n kernel%{_alt_kernel}-misc-gfs
+%defattr(644,root,root,755)
 /lib/modules/%{_kernel_ver}/misc/gfs.ko*
 #/lib/modules/%{_kernel_ver}/misc/gnbd.ko*
 %endif
