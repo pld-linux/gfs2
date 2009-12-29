@@ -185,78 +185,18 @@ rm -rf $RPM_BUILD_ROOT
 %attr(754,root,root) /etc/rc.d/init.d/qdiskd
 %attr(754,root,root) /etc/rc.d/init.d/rgmanager
 %attr(754,root,root) /etc/rc.d/init.d/scsi_reserve
-/etc/udev/rules.d/51-dlm.rules
-%{_includedir}/ccs.h
-%{_includedir}/libcman.h
-%{_includedir}/libdlm.h
-%{_libdir}/libccs.a
-%{_libdir}/libcman.a
 %attr(755,root,root) %{_libdir}/libcman.so
 %attr(755,root,root) %{_libdir}/libcman.so.2
 %attr(755,root,root) %{_libdir}/libcman.so.2.3
-%{_libdir}/libdlm.a
-%attr(755,root,root) %{_libdir}/libdlm.so
-%attr(755,root,root) %{_libdir}/libdlm.so.2
-%attr(755,root,root) %{_libdir}/libdlm.so.2.3
-%{_libdir}/libdlm_lt.a
 %attr(755,root,root) %{_libdir}/libdlm_lt.so
 %attr(755,root,root) %{_libdir}/libdlm_lt.so.2
 %attr(755,root,root) %{_libdir}/libdlm_lt.so.2.3
-%{_prefix}/libexec/lcrso/service_cman.lcrso
-%{_datadir}/cluster/ASEHAagent.sh
-%{_datadir}/cluster/SAPDatabase
-%{_datadir}/cluster/SAPInstance
-%{_datadir}/cluster/apache.metadata
-%{_datadir}/cluster/apache.sh
-%{_datadir}/cluster/clusterfs.sh
-%{_datadir}/cluster/default_event_script.sl
-%{_datadir}/cluster/fs.sh
-%{_datadir}/cluster/ip.sh
-%{_datadir}/cluster/lvm.metadata
-%{_datadir}/cluster/lvm.sh
-%{_datadir}/cluster/lvm_by_lv.sh
-%{_datadir}/cluster/lvm_by_vg.sh
-%{_datadir}/cluster/mysql.metadata
-%{_datadir}/cluster/mysql.sh
-%{_datadir}/cluster/named.metadata
-%{_datadir}/cluster/named.sh
-%{_datadir}/cluster/netfs.sh
-%{_datadir}/cluster/nfsclient.sh
-%{_datadir}/cluster/nfsexport.sh
-%{_datadir}/cluster/ocf-shellfuncs
-%{_datadir}/cluster/openldap.metadata
-%{_datadir}/cluster/openldap.sh
-%{_datadir}/cluster/oracledb.sh
-%{_datadir}/cluster/postgres-8.metadata
-%{_datadir}/cluster/postgres-8.sh
-%{_datadir}/cluster/samba.metadata
-%{_datadir}/cluster/samba.sh
-%{_datadir}/cluster/script.sh
-%{_datadir}/cluster/service.sh
-%{_datadir}/cluster/smb.sh
-%{_datadir}/cluster/svclib_nfslock
-%{_datadir}/cluster/tomcat-5.metadata
-%{_datadir}/cluster/tomcat-5.sh
-%{_datadir}/cluster/utils/config-utils.sh
-%{_datadir}/cluster/utils/httpd-parse-config.pl
-%{_datadir}/cluster/utils/member_util.sh
-%{_datadir}/cluster/utils/messages.sh
-%{_datadir}/cluster/utils/ra-skelet.sh
-%{_datadir}/cluster/utils/tomcat-parse-config.pl
-%{_datadir}/cluster/vm.sh
-%{_docdir}/cluster/COPYING.applications
-%{_docdir}/cluster/COPYING.libraries
-%{_docdir}/cluster/COPYRIGHT
-%{_docdir}/cluster/README.licence
-%{_docdir}/cluster/journaling.txt
-%{_docdir}/cluster/min-gfs.txt
-%{_docdir}/cluster/usage.txt
-%{_datadir}/fence/fencing.py
-%{_datadir}/fence/telnet_ssl
-%{_datadir}/snmp/mibs/powernet369.mib
+%attr(755,root,root) %{_libdir}/libdlm.so
+%attr(755,root,root) %{_libdir}/libdlm.so.2
+%attr(755,root,root) %{_libdir}/libdlm.so.2.3
+%attr(755,root,root) %{_sbindir}/ccsd
 %attr(755,root,root) %{_sbindir}/ccs_test
 %attr(755,root,root) %{_sbindir}/ccs_tool
-%attr(755,root,root) %{_sbindir}/ccsd
 %attr(755,root,root) %{_sbindir}/clubufflush
 %attr(755,root,root) %{_sbindir}/clufindhostname
 %attr(755,root,root) %{_sbindir}/clulog
@@ -277,6 +217,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_sbindir}/fence_brocade
 %attr(755,root,root) %{_sbindir}/fence_bullpap
 %attr(755,root,root) %{_sbindir}/fence_cpint
+%attr(755,root,root) %{_sbindir}/fenced
 %attr(755,root,root) %{_sbindir}/fence_drac
 %attr(755,root,root) %{_sbindir}/fence_drac5
 %attr(755,root,root) %{_sbindir}/fence_egenera
@@ -304,7 +245,6 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_sbindir}/fence_wti
 %attr(755,root,root) %{_sbindir}/fence_xcat
 %attr(755,root,root) %{_sbindir}/fence_zvm
-%attr(755,root,root) %{_sbindir}/fenced
 %attr(755,root,root) %{_sbindir}/fsck.gfs
 %attr(755,root,root) %{_sbindir}/gfs_controld
 %attr(755,root,root) %{_sbindir}/gfs_debug
@@ -322,44 +262,25 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_sbindir}/gnbd_monitor
 %attr(755,root,root) %{_sbindir}/gnbd_recvd
 %attr(755,root,root) %{_sbindir}/gnbd_serv
-%attr(755,root,root) %{_sbindir}/group_tool
 %attr(755,root,root) %{_sbindir}/groupd
+%attr(755,root,root) %{_sbindir}/group_tool
 %attr(755,root,root) %{_sbindir}/mkfs.gfs
 %attr(755,root,root) %{_sbindir}/mkqdisk
 %attr(755,root,root) %{_sbindir}/mount.gfs
 %attr(755,root,root) %{_sbindir}/qdiskd
 %attr(755,root,root) %{_sbindir}/rg_test
 %attr(755,root,root) %{_sbindir}/umount.gfs
-%{_includedir}/ccs.h
-%{_includedir}/libcman.h
-%{_includedir}/libdlm.h
-%{_libdir}/libccs.a
-%{_libdir}/libcman.a
-%attr(755,root,root) %{_libdir}/libcman.so
-%attr(755,root,root) %{_libdir}/libcman.so.2
-%attr(755,root,root) %{_libdir}/libcman.so.2.3
-%{_libdir}/libdlm.a
-%attr(755,root,root) %{_libdir}/libdlm.so
-%attr(755,root,root) %{_libdir}/libdlm.so.2
-%attr(755,root,root) %{_libdir}/libdlm.so.2.3
-%{_libdir}/libdlm_lt.a
-%attr(755,root,root) %{_libdir}/libdlm_lt.so
-%attr(755,root,root) %{_libdir}/libdlm_lt.so.2
-%attr(755,root,root) %{_libdir}/libdlm_lt.so.2.3
-%{_prefix}/libexec/lcrso/service_cman.lcrso
-%{_datadir}/cluster/ASEHAagent.sh
-%{_datadir}/cluster/SAPDatabase
-%{_datadir}/cluster/SAPInstance
 %{_datadir}/cluster/apache.metadata
 %{_datadir}/cluster/apache.sh
+%{_datadir}/cluster/ASEHAagent.sh
 %{_datadir}/cluster/clusterfs.sh
 %{_datadir}/cluster/default_event_script.sl
 %{_datadir}/cluster/fs.sh
 %{_datadir}/cluster/ip.sh
-%{_datadir}/cluster/lvm.metadata
-%{_datadir}/cluster/lvm.sh
 %{_datadir}/cluster/lvm_by_lv.sh
 %{_datadir}/cluster/lvm_by_vg.sh
+%{_datadir}/cluster/lvm.metadata
+%{_datadir}/cluster/lvm.sh
 %{_datadir}/cluster/mysql.metadata
 %{_datadir}/cluster/mysql.sh
 %{_datadir}/cluster/named.metadata
@@ -375,6 +296,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/cluster/postgres-8.sh
 %{_datadir}/cluster/samba.metadata
 %{_datadir}/cluster/samba.sh
+%{_datadir}/cluster/SAPDatabase
+%{_datadir}/cluster/SAPInstance
 %{_datadir}/cluster/script.sh
 %{_datadir}/cluster/service.sh
 %{_datadir}/cluster/smb.sh
@@ -388,15 +311,24 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/cluster/utils/ra-skelet.sh
 %{_datadir}/cluster/utils/tomcat-parse-config.pl
 %{_datadir}/cluster/vm.sh
+%{_datadir}/fence/fencing.py
+%{_datadir}/fence/telnet_ssl
+%{_datadir}/snmp/mibs/powernet369.mib
 %{_docdir}/cluster/COPYING.applications
 %{_docdir}/cluster/COPYING.libraries
 %{_docdir}/cluster/COPYRIGHT
-%{_docdir}/cluster/README.licence
 %{_docdir}/cluster/journaling.txt
 %{_docdir}/cluster/min-gfs.txt
+%{_docdir}/cluster/README.licence
 %{_docdir}/cluster/usage.txt
-%{_datadir}/fence/fencing.py
-%{_datadir}/fence/telnet_ssl
+/etc/udev/rules.d/51-dlm.rules
+%{_includedir}/ccs.h
+%{_includedir}/libcman.h
+%{_includedir}/libdlm.h
+%{_libdir}/libccs.a
+%{_libdir}/libcman.a
+%{_libdir}/libdlm.a
+%{_libdir}/libdlm_lt.a
 %{_mandir}/man3/dlm_cleanup.3
 %{_mandir}/man3/dlm_close_lockspace.3
 %{_mandir}/man3/dlm_create_lockspace.3*
@@ -421,9 +353,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man5/cman.5*
 %{_mandir}/man5/qdisk.5*
 %{_mandir}/man7/ccs.7*
+%{_mandir}/man8/ccsd.8*
 %{_mandir}/man8/ccs_test.8*
 %{_mandir}/man8/ccs_tool.8*
-%{_mandir}/man8/ccsd.8*
 %{_mandir}/man8/clubufflush.8*
 %{_mandir}/man8/clufindhostname.8*
 %{_mandir}/man8/clulog.8*
@@ -441,6 +373,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man8/fence_bladecenter.8*
 %{_mandir}/man8/fence_brocade.8*
 %{_mandir}/man8/fence_bullpap.8*
+%{_mandir}/man8/fenced.8*
 %{_mandir}/man8/fence_drac.8*
 %{_mandir}/man8/fence_egenera.8*
 %{_mandir}/man8/fence_eps.8*
@@ -462,7 +395,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man8/fence_wti.8*
 %{_mandir}/man8/fence_xvm.8*
 %{_mandir}/man8/fence_xvmd.8*
-%{_mandir}/man8/fenced.8*
 %{_mandir}/man8/gfs.8*
 %{_mandir}/man8/gfs_controld.8*
 %{_mandir}/man8/gfs_edit.8
@@ -477,11 +409,11 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man8/gnbd_export.8*
 %{_mandir}/man8/gnbd_import.8*
 %{_mandir}/man8/gnbd_serv.8*
-%{_mandir}/man8/group_tool.8*
 %{_mandir}/man8/groupd.8*
+%{_mandir}/man8/group_tool.8*
 %{_mandir}/man8/mkqdisk.8*
 %{_mandir}/man8/qdiskd.8*
-%{_datadir}/snmp/mibs/powernet369.mib
+%{_prefix}/libexec/lcrso/service_cman.lcrso
 %endif
 
 %if %{with kernel}
