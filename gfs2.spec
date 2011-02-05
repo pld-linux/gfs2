@@ -59,7 +59,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define		_sbindir	/sbin
 
-%description -n gfs2
+%description
 GFS (Global File System) is a cluster file system. It allows a cluster
 of computers to simultaneously use a block device that is shared
 between them (with FC, iSCSI, NBD, etc...). GFS reads and writes to
@@ -69,7 +69,7 @@ is maintained. One of the nifty features of GFS is perfect consistency
 -- changes made to the filesystem on one machine show up immediately on all
 other machines in the cluster.
 
-%description -n gfs2 -l pl.UTF-8
+%description -l pl.UTF-8
 GFS (Global File System) to klastrowy system plików. Pozwala klastrowi
 komputerów na jednoczesne korzystanie z urządzenia blokowego
 dzielonego między nimi (poprzez FC, iSCSI, NBD itp.). GFS odczytuje i
@@ -171,7 +171,7 @@ mv $RPM_BUILD_ROOT/''etc/init.d/* $RPM_BUILD_ROOT/etc/rc.d/init.d
 rm -rf $RPM_BUILD_ROOT
 
 %if %{with userspace}
-%files -n gfs2
+%files
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_sbindir}/*gfs2*
 %attr(754,root,root) /etc/rc.d/init.d/gfs2
