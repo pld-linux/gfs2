@@ -1,0 +1,255 @@
+--- cluster-2.03.10/gfs2/libgfs2/ondisk.c.orig	2008-12-09 09:36:04.000000000 +0100
++++ cluster-2.03.10/gfs2/libgfs2/ondisk.c	2011-05-23 18:13:36.813924684 +0200
+@@ -217,8 +217,7 @@ void gfs2_quota_in(struct gfs2_quota *qu
+ 	CPIN_64(qu, str, qu_limit);
+ 	CPIN_64(qu, str, qu_warn);
+ 	CPIN_64(qu, str, qu_value);
+-	CPIN_32(qu, str, qu_ll_next);
+-	CPIN_08(qu, str, qu_reserved, 60);
++	CPIN_08(qu, str, qu_reserved, 64);
+ }
+ 
+ void gfs2_quota_out(struct gfs2_quota *qu, char *buf)
+@@ -228,8 +227,7 @@ void gfs2_quota_out(struct gfs2_quota *q
+ 	CPOUT_64(qu, str, qu_limit);
+ 	CPOUT_64(qu, str, qu_warn);
+ 	CPOUT_64(qu, str, qu_value);
+-	CPOUT_32(qu, str, qu_ll_next);
+-	CPOUT_08(qu, str, qu_reserved, 60);
++	CPOUT_08(qu, str, qu_reserved, 64);
+ }
+ 
+ void gfs2_quota_print(struct gfs2_quota *qu)
+--- cluster-2.03.10/gfs2/quota/main.c.orig	2008-12-09 09:36:04.000000000 +0100
++++ cluster-2.03.10/gfs2/quota/main.c	2011-05-27 23:17:21.726106878 +0200
+@@ -374,106 +374,6 @@
+ }
+ 
+ /**
+- * is_valid_quota_list - Check if we have a valid quota list
+- * @fd: an open file descriptor of the quota file
+- * Returns 0 or 1.
+- */
+-int 
+-is_valid_quota_list(int fd)
+-{
+-	/* This is a slow test to determine if the quotas are in a 
+-	 * linked list. We should come up with something better
+-	 * Quota linked list format is identified by the following.
+-	 * step1: Get the maximum groupid and userid having valid
+-	 *        quotas in the quota file.
+-	 * step2: Obtain the size of the quota file. The size of the 
+-	 *        quota file (position of the last valid quota) 
+-	 *        determines the last user/group id.
+-	 * step3: If we can obtain the last valid quota through the 
+-	 *        lists, then our lists are good. Else, the lists are 
+-	 *        either corrupt or an older quota file format is in use
+-	 */
+-	int id_type = GQ_ID_GROUP;
+-	uint32_t id = 0, prev, ulast = 0, glast = 0, max;
+-	struct gfs2_quota q;
+-
+-	get_last_quota_id(fd, &max);
+-again:
+-	do {
+-		read_quota_internal(fd, id, id_type, &q);
+-		prev = id;
+-		id = q.qu_ll_next;
+-		if (id > max)
+-			return 0;
+-	} while (id && id > prev);
+-
+-	if (id && id <= prev)
+-		return 0;
+-
+-	if (id_type == GQ_ID_GROUP)
+-		glast = prev;
+-	else
+-		ulast = prev;
+-
+-	if (id_type == GQ_ID_GROUP) {
+-		id_type = GQ_ID_USER;
+-		id = 0;
+-		goto again;
+-	}
+-
+-	if (glast != max && ulast != max)
+-		return 0;
+-	
+-	return 1;
+-}
+-
+-void 
+-print_quota_list_warning()
+-{
+-	printf("\nWarning: This filesystem doesn't seem to have the new quota "
+-	       "list format or the quota list is corrupt. list, check and init "
+-	       "operation performance will suffer due to this. It is recommended "
+-	       "that you run the 'gfs2_quota reset' operation to reset the quota "
+-	       "file. All current quota information will be lost and you will "
+-	       "have to reassign all quota limits and warnings\n\n"); 
+-}
+-
+-/**
+- * adjust_quota_list - Adjust the quota linked list
+- * @fd: The quota file descriptor
+- * @comline: the struct containing the parsed command line arguments
+- */
+-static void
+-adjust_quota_list(int fd, commandline_t *comline)
+-{
+-	uint32_t prev = 0, next = 0, id = comline->id;
+-	struct gfs2_quota tmpq, q;
+-	int id_type = comline->id_type;
+-	
+-	if (id == 0) /* root quota, don't do anything */
+-		goto out;
+-	/* We just wrote the quota for id in do_set(). Get it */
+-	next = 0;
+-	do {
+-		read_quota_internal(fd, next, id_type, &q);
+-		prev = next;
+-		next = q.qu_ll_next;
+-		if (prev == id) /* no duplicates, bail */
+-			goto out;
+-		if (prev < id && id < next) /* gotcha! */
+-			break;
+-	} while(next && next > prev);
+-	read_quota_internal(fd, id, id_type, &tmpq);
+-	tmpq.qu_ll_next = next;
+-	q.qu_ll_next = id;
+-	write_quota_internal(fd, id, id_type, &tmpq);
+-	write_quota_internal(fd, prev, id_type, &q);
+-
+-out:
+-	return;
+-}
+-
+-/**
+  * do_reset - Reset all the quota data for a filesystem
+  * @comline: the struct containing the parsed command line arguments
+  */
+@@ -512,11 +412,9 @@
+ 	}
+ 
+ 	read_quota_internal(fd, 0, GQ_ID_USER, &q);
+-	q.qu_ll_next = 0;
+ 	write_quota_internal(fd, 0, GQ_ID_USER, &q);
+ 
+ 	read_quota_internal(fd, 0, GQ_ID_GROUP, &q);
+-	q.qu_ll_next = 0;
+ 	write_quota_internal(fd, 0, GQ_ID_GROUP, &q);
+ 
+ 	/* truncate the quota file such that only the first
+@@ -568,29 +466,6 @@
+ 		    strerror(errno));
+ 	}
+ 	
+-	if (!is_valid_quota_list(fd)) {
+-		print_quota_list_warning();
+-		goto do_old_school;
+-	}
+-	get_last_quota_id(fd, &maxid);
+-	
+-	for (pass=0; pass<2; pass++) {
+-		id = 0;
+-		id_type = pass ? GQ_ID_GROUP : GQ_ID_USER;
+-		
+-		do {
+-			read_quota_internal(fd, id, id_type, &q);
+-			prev = id;
+-			if (q.qu_limit || q.qu_warn || q.qu_value)
+-				print_quota(comline, 
+-					    id_type == GQ_ID_USER ? TRUE : FALSE, 
+-					    id, &q, &sdp->sd_sb);
+-			id = q.qu_ll_next;
+-		} while(id && id > prev && id <= maxid);
+-	}
+-	goto out;
+-
+-do_old_school:
+ 	for (pass=0; pass<2; pass++) {
+ 		if (!pass)
+ 			offset = 0;
+@@ -615,7 +490,6 @@
+ 			offset += 2 * sizeof(struct gfs2_quota);
+ 		} while (error == sizeof(struct gfs2_quota));
+ 	}
+-out:
+ 	close(fd);
+ 	close(sdp->metafs_fd);
+ 	cleanup_metafs(sdp);
+@@ -789,7 +663,7 @@
+ 	int fd;
+ 	uint64_t offset;
+ 	uint64_t new_value;
+-	int error, adj_flag = 0;;
++	int error;
+ 	char quota_file[BUF_SIZE];
+ 	char id_str[16];
+ 	struct stat stat_buf;
+@@ -816,11 +690,6 @@
+ 		    strerror(errno));
+ 	}
+ 	
+-	if (is_valid_quota_list(fd))
+-		adj_flag = 1;
+-	else
+-		print_quota_list_warning();
+-
+ 	switch (comline->id_type) {
+ 	case GQ_ID_USER:
+ 		offset = (2 * (uint64_t)comline->id) * sizeof(struct gfs2_quota);
+@@ -938,8 +807,6 @@
+ 	set_sysfs(fs, comline->id_type == GQ_ID_USER ?
+ 		  "quota_refresh_user" : "quota_refresh_group", id_str);
+ 	
+-	if (adj_flag)
+-		adjust_quota_list(fd, comline);
+ out:
+ 	close(fd);
+ 	close(sdp->metafs_fd);
+--- cluster-2.03.10/gfs2/quota/check.c.orig	2008-12-09 09:36:04.000000000 +0100
++++ cluster-2.03.10/gfs2/quota/check.c	2011-05-27 23:16:22.309438221 +0200
+@@ -194,33 +194,6 @@
+ 		    strerror(errno));
+ 	}
+ 
+-	if (!is_valid_quota_list(fd)) {
+-		print_quota_list_warning();
+-		goto do_old_school;
+-	}
+-	get_last_quota_id(fd, &maxid);
+-	
+-	for (pass=0; pass<2; pass++) {
+-		id = 0;
+-		id_type = pass ? GQ_ID_GROUP : GQ_ID_USER;
+-		
+-		do {
+-			read_quota_internal(fd, id, id_type, &q);
+-			prev = id;
+-			q.qu_value <<= sdp->sd_sb.sb_bsize_shift - 9;
+-			
+-			if (q.qu_value) {
+-				if (pass)
+-					add_value(gid, id, q.qu_value);
+-				else
+-					add_value(uid, id, q.qu_value);
+-			}
+-			id = q.qu_ll_next;
+-		} while(id && id > prev && id <= maxid);
+-	}
+-	goto out;
+-	
+-do_old_school:
+ 	do {
+ 		
+ 		memset(buf, 0, sizeof(struct gfs2_quota));
+@@ -249,7 +222,6 @@
+ 		offset += sizeof(struct gfs2_quota);
+ 	} while (error == sizeof(struct gfs2_quota));
+ 
+-out:
+ 	close(fd);
+ 	close(sdp->metafs_fd);
+ 	cleanup_metafs(sdp);

@@ -1,0 +1,72 @@
+--- cluster-2.03.10/gfs2/mkfs/main_mkfs.c.orig	2008-12-09 09:36:04.000000000 +0100
++++ cluster-2.03.10/gfs2/mkfs/main_mkfs.c	2011-05-23 19:32:57.164084076 +0200
+@@ -12,10 +12,10 @@
+ #include <stdarg.h>
+ #include <mntent.h>
+ 
++#include <blkid/blkid.h>
+ #include <linux/types.h>
+ #include "libgfs2.h"
+ #include "gfs2_mkfs.h"
+-#include "libvolume_id.h"
+ 
+ char *prog_name;
+ 
+@@ -258,33 +258,35 @@
+ static void are_you_sure(struct gfs2_sbd *sdp)
+ {
+ 	char input[32];
+-	struct volume_id *vid = NULL;
++	blkid_probe pr;
+ 	int fd;
+ 
+ 	fd = open(sdp->device_name, O_RDONLY);
+ 	if (fd < 0)
+ 		die("Error: device %s not found.\n", sdp->device_name);
+-	vid = volume_id_open_fd(fd);
+-	if (vid == NULL) {
++	pr = blkid_new_probe();
++	if (pr == NULL) {
+ 		close(fd);
+ 		die("error identifying the contents of %s: %s\n",
+ 		    sdp->device_name, strerror(errno));
+ 	}
+ 	printf("This will destroy any data on %s.\n", sdp->device_name);
+-	if (volume_id_probe_all(vid, 0, sdp->device_size) == 0) {
++	blkid_probe_set_request(pr, BLKID_PROBREQ_TYPE | BLKID_PROBREQ_USAGE);
++	if ((blkid_probe_set_device(pr, fd, 0, sdp->device_size) == 0) &&
++	    (blkid_do_safeprobe(pr) == 0)) {
+ 		const char *fstype, *fsusage;
+ 		int rc;
+ 
+-		rc = volume_id_get_type(vid, &fstype);
++		rc = blkid_probe_lookup_value(pr, "TYPE", &fstype, NULL);
+ 		if (rc) {
+-			rc = volume_id_get_usage(vid, &fsusage);
++			rc = blkid_probe_lookup_value(pr, "USAGE", &fsusage, NULL);
+ 			if (!rc || strncmp(fsusage, "other", 5) == 0)
+ 				fsusage = "partition";
+ 			printf("  It appears to contain a %s %s.\n", fstype,
+ 			       fsusage);
+ 		}
+ 	}
+-	volume_id_close(vid);
++	blkid_free_probe(pr);
+ 	close(fd);
+ 	printf("\nAre you sure you want to proceed? [y/n] ");
+ 	fgets(input, 32, stdin);
+--- cluster-2.03.10/gfs2/mkfs/Makefile.orig	2011-05-23 18:20:05.000000000 +0200
++++ cluster-2.03.10/gfs2/mkfs/Makefile	2011-05-23 18:21:26.757273752 +0200
+@@ -20,11 +20,10 @@
+ 	main_jadd.o
+ 
+ CFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_GNU_SOURCE
+-CFLAGS += -I${volidincdir}
+ CFLAGS += -I$(S)/../include -I$(S)/../libgfs2
+ CFLAGS += -I${incdir}
+ 
+-LDFLAGS += -L${volidlibdir} -lvolume_id
++LDFLAGS += -lblkid
+ LDFLAGS += -L../libgfs2 -lgfs2
+ 
+ 

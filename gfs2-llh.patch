@@ -1,0 +1,30 @@
+--- cluster-2.03.10/gfs2/libgfs2/Makefile.orig	2008-12-09 09:36:04.000000000 +0100
++++ cluster-2.03.10/gfs2/libgfs2/Makefile	2011-05-23 18:01:19.803900005 +0200
+@@ -9,7 +9,6 @@ include $(OBJDIR)/make/install.mk
+ include $(OBJDIR)/make/uninstall.mk
+ 
+ CFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_GNU_SOURCE
+-CFLAGS += -I${KERNEL_SRC}/fs/gfs2/ -I${KERNEL_SRC}/include/
+ CFLAGS += -I$(S)/../include
+ CFLAGS += -I${incdir}
+ CFLAGS += -fPIC
+--- cluster-2.03.10/gfs2/mkfs/Makefile.orig	2008-12-09 09:36:04.000000000 +0100
++++ cluster-2.03.10/gfs2/mkfs/Makefile	2011-05-23 18:16:57.367264732 +0200
+@@ -20,7 +20,6 @@
+ 	main_jadd.o
+ 
+ CFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_GNU_SOURCE
+-CFLAGS += -I${KERNEL_SRC}/include/
+ CFLAGS += -I${volidincdir}
+ CFLAGS += -I$(S)/../include -I$(S)/../libgfs2
+ CFLAGS += -I${incdir}
+--- cluster-2.03.10/gfs2/quota/Makefile.orig	2008-12-09 09:36:04.000000000 +0100
++++ cluster-2.03.10/gfs2/quota/Makefile	2011-05-23 19:35:46.334089741 +0200
+@@ -15,7 +15,6 @@
+ 	check.o
+ 
+ CFLAGS += -DHELPER_PROGRAM -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
+-CFLAGS += -I${KERNEL_SRC}/fs/gfs2/ -I${KERNEL_SRC}/include/
+ CFLAGS += -I$(S)/../include -I$(S)/../libgfs2
+ CFLAGS += -I${incdir}
+ 
