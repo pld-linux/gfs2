@@ -1,5 +1,5 @@
 # NOTE:
-# - obsolete, for 3rd generation cluster see cluster.spec
+# - obsolete, for 3rd generation cluster see cluster.spec and gfs2-utils.spec
 # - gfs2 and dlm kernel modules are in the kernel package
 #   (2.6.28.9-3 for example); gfs is the old GFS.
 #
