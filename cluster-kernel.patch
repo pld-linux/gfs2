@@ -1,0 +1,15 @@
+--- cluster-2.03.11/configure.orig	2009-01-22 13:33:51.000000000 +0100
++++ cluster-2.03.11/configure	2018-05-14 21:46:55.682776792 +0200
+@@ -270,9 +270,9 @@
+ 	return 1;
+     }
+     # checking VERSION, PATCHLEVEL and SUBLEVEL for the supplied kernel
+-    if ($build_version >= $version[0] &&
+-        $build_patchlevel >= $version[1] &&
+-        $build_sublevel >= $version[2]) {
++    if ($build_version > $version[0] || ($build_version == $version[0] &&
++        ($build_patchlevel > $version[1] || ($build_patchlevel == $version[1] &&
++        $build_sublevel >= $version[2])))) {
+       print " Current kernel version appears to be OK\n";
+       return 1;
+     } else {

@@ -1,5 +1,5 @@
 # NOTE:
-# - for 3rd generation cluster see cluster.spec
+# - obsolete, for 3rd generation cluster see cluster.spec
 # - gfs2 and dlm kernel modules are in the kernel package
 #   (2.6.28.9-3 for example); gfs is the old GFS.
 #
@@ -28,23 +28,23 @@
 Summary:	Shared-disk cluster file system
 Summary(pl.UTF-8):	Klastrowy system plików na współdzielonym dysku
 Name:		gfs2
-Version:	2.03.10
+Version:	2.03.11
 Release:	%{rel}
 Epoch:		1
 License:	GPL v2
 Group:		Applications/System
 Source0:	ftp://sources.redhat.com/pub/cluster/releases/cluster-%{version}.tar.gz
-# Source0-md5:	379b560096e315d4b52e238a5c72ba4a
+# Source0-md5:	712b9f583472d1de614641bc0f4a0aaf
 Patch0:		%{name}-kernel-2.6.28.patch
 Patch1:		%{name}-llh.patch
 Patch2:		%{name}-blkid.patch
 Patch3:		%{name}-quota-nolist.patch
+Patch4:		cluster-kernel.patch
 URL:		http://sources.redhat.com/cluster/gfs/
 BuildRequires:	libblkid-devel >= 2.16
 # which exactly version merged qq_ll_next into reserved in gfs2_quota struct?
 BuildRequires:	linux-libc-headers >= 7:2.6.38
 BuildRequires:	ncurses-devel
-BuildRequires:	openais-devel
 BuildRequires:	perl-base
 %if %{with dist_kernel}
 BuildRequires:	kernel%{_alt_kernel}-module-build >= 3:2.6.27
@@ -116,6 +116,7 @@ Moduł jądra gnbd.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
+%patch4 -p1
 
 %{__perl} -pi -e 's/-lncurses/-lncurses -ltinfo/' gfs2/edit/Makefile
 
@@ -136,7 +137,7 @@ sed -i -e "s,\$(OBJDIR),$PWD," gnbd-kernel/src/Makefile
 	--incdir=%{_includedir} \
 	--ncursesincdir=%{_includedir}/ncurses \
 	--libdir=%{_libdir} \
-	--libexecdir=%{_libdir} \
+	--libexecdir=%{_libexecdir} \
 	--mandir=%{_mandir} \
 	--prefix=%{_prefix} \
 	--sbindir=%{_sbindir} \
@@ -162,7 +163,7 @@ rm -rf $RPM_BUILD_ROOT
 	DESTDIR=$RPM_BUILD_ROOT
 
 install -d $RPM_BUILD_ROOT/etc/rc.d/init.d
-mv $RPM_BUILD_ROOT/''etc/init.d/* $RPM_BUILD_ROOT/etc/rc.d/init.d
+%{__mv} $RPM_BUILD_ROOT/''etc/init.d/* $RPM_BUILD_ROOT/etc/rc.d/init.d
 %endif
 
 %if %{with kernel}
